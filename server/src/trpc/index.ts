@@ -13,12 +13,14 @@ import { authRouter } from './routers/auth.router.js';
 import { serverRouter } from './routers/server.router.js';
 import { channelRouter } from './routers/channel.router.js';
 import { messageRouter } from './routers/message.router.js';
+import { voiceRouter } from './routers/voice.router.js';
 
 export const appRouter = t.router({
   auth: authRouter,
   server: serverRouter,
   channel: channelRouter,
   message: messageRouter,
+  voice: voiceRouter,
 });
 
 export type AppRouter = typeof appRouter;

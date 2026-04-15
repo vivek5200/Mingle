@@ -25,3 +25,38 @@ export function snakeToCamel<T extends Record<string, unknown>>(
   }
   return result;
 }
+
+/** Securely send a webhook to the Go SFU */
+export async function sendInternalWebhook(url: string, payload: any): Promise<void> {
+  const crypto = await import('crypto');
+  
+  const payloadStr = JSON.stringify(payload);
+  const payloadB64 = Buffer.from(payloadStr).toString('base64url');
+  
+  const secret = process.env.INTERNAL_SECRET;
+  if (!secret) throw new Error('INTERNAL_SECRET is not configured');
+
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(payloadB64)
+    .digest('base64url');
+
+  const token = `${payloadB64}.${signature}`;
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: payloadStr
+    });
+    
+    if (!res.ok) {
+      console.error(`Webhook to ${url} failed: ${res.status} ${res.statusText}`);
+    }
+  } catch (err) {
+    console.error(`Webhook to ${url} failed:`, err);
+  }
+}

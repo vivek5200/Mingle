@@ -6,6 +6,9 @@ import (
 	"net/http"
 
 	"github.com/vivek/mingale-sfu/internal/config"
+	"github.com/vivek/mingale-sfu/internal/room"
+	"github.com/vivek/mingale-sfu/internal/signal"
+	webrtcEngine "github.com/vivek/mingale-sfu/internal/webrtc"
 )
 
 func main() {
@@ -15,8 +18,18 @@ func main() {
 	cfg := config.Load()
 	log.Println("Config loaded successfully.")
 
-	// 2. Setup router
+	// 2. Initialize WebRTC Engine & Room Manager
+	api, err := webrtcEngine.InitEngine()
+	if err != nil {
+		log.Fatalf("Failed to initialize WebRTC engine: %v", err)
+	}
+	roomManager := room.NewManager()
+
+	// 3. Setup router
 	mux := http.NewServeMux()
+
+	// Initialize Signal Handler
+	signalHandler := signal.NewHandler(cfg, roomManager, api)
 
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +37,9 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 
-	// TODO: POST /offer endpoint
+	// WebRTC endpoints
+	mux.HandleFunc("/offer", signalHandler.HandleOffer)
+	mux.HandleFunc("/rtc/kick", signalHandler.HandleKick)
 
 	// 3. Start server
 	addr := fmt.Sprintf(":%s", cfg.Port)

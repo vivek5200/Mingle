@@ -11,7 +11,14 @@ import { assembleReadyPayload } from '../services/gateway.service.js';
 import { setPresence, removePresence } from '../services/presence.service.js';
 import { logger } from '../utils/logger.js';
 
+export let globalIo: SocketServer | null = null;
+
+export function getSocketServer(): SocketServer | null {
+  return globalIo;
+}
+
 export function registerSocketHandlers(io: SocketServer): void {
+  globalIo = io;
   // JWT auth middleware (Section 3.1, socketAuth.ts)
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token as string | undefined;
