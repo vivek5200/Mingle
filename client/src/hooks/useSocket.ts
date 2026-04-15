@@ -50,8 +50,8 @@ export function useSocket() {
     function applyEvent(type: string, payload: unknown) {
       switch (type) {
         case 'message:new': {
-          const p = payload as { channelId: string; message: Message }
-          addMessage(p.channelId, p.message)
+          const message = payload as Message
+          addMessage(message.channelId, message)
           break
         }
         case 'presence:changed': {

@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { ServerWithChannels } from '@discord/shared'
 import { useAppStore } from '../../store'
 import UserPanel from './UserPanel'
 import VoicePanel from '../voice/VoicePanel'
+import ServerDropdownMenu from '../server/ServerDropdownMenu'
 
 interface Props {
   server: ServerWithChannels | null
@@ -13,6 +15,7 @@ export default function ChannelSidebar({ server }: Props) {
   const navigate = useNavigate()
   const activeVoiceChannelId = useAppStore((s) => s.activeVoiceChannelId)
   const setActiveVoiceChannel = useAppStore((s) => s.setActiveVoiceChannel)
+  const [showDropdown, setShowDropdown] = useState(false)
 
   if (!server) {
     return (
@@ -49,12 +52,17 @@ export default function ChannelSidebar({ server }: Props) {
   return (
     <aside className="flex flex-col w-[240px] bg-bg-secondary shrink-0">
       {/* Server header */}
-      <div className="flex items-center h-12 px-4 border-b border-bg-tertiary shadow-sm
+      <div className="relative">
+        <div
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="flex items-center h-12 px-4 border-b border-bg-tertiary shadow-sm
                       hover:bg-bg-modifier-hover cursor-pointer transition-colors no-select">
-        <h2 className="text-text-primary font-semibold truncate flex-1">{server.name}</h2>
-        <svg className="w-4 h-4 text-text-muted" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" />
-        </svg>
+          <h2 className="text-text-primary font-semibold truncate flex-1">{server.name}</h2>
+          <svg className={`w-4 h-4 text-text-muted transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+            <path d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" />
+          </svg>
+        </div>
+        <ServerDropdownMenu server={server} isOpen={showDropdown} onClose={() => setShowDropdown(false)} />
       </div>
 
       {/* Channel list */}

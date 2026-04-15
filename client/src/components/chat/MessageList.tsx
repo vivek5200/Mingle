@@ -5,9 +5,10 @@ import MessageItem from './MessageItem.tsx'
 
 interface Props {
   channelId: string
+  channelName?: string
 }
 
-export default function MessageList({ channelId }: Props) {
+export default function MessageList({ channelId, channelName }: Props) {
   const messagesByChannel = useAppStore((s) => s.messagesByChannel)
   const prependMessages = useAppStore((s) => s.prependMessages)
   const messages = messagesByChannel.get(channelId) ?? []
@@ -71,16 +72,20 @@ export default function MessageList({ channelId }: Props) {
         </div>
       )}
 
-      {/* Empty state */}
-      {!historyQuery.isLoading && messages.length === 0 && (
-        <div className="flex-1 flex flex-col items-center justify-end pb-8 px-4">
-          <div className="w-16 h-16 rounded-full bg-bg-secondary flex items-center justify-center mb-4">
-            <span className="text-3xl">#</span>
+      {/* Channel welcome header */}
+      {!historyQuery.isLoading && (
+        <div className="flex-1 flex flex-col justify-end">
+          <div className="px-4 pt-16 pb-4">
+            <div className="w-[68px] h-[68px] rounded-full bg-bg-modifier-hover flex items-center justify-center mb-3">
+              <span className="text-4xl text-text-muted">#</span>
+            </div>
+            <h3 className="text-3xl font-bold text-text-primary mb-2">
+              Welcome to #{channelName ?? 'channel'}!
+            </h3>
+            <p className="text-text-muted text-base">
+              This is the start of the <strong className="text-text-secondary">#{channelName ?? 'channel'}</strong> channel.
+            </p>
           </div>
-          <h3 className="text-xl font-bold text-text-primary mb-2">Welcome to #channel!</h3>
-          <p className="text-text-muted text-sm text-center">
-            This is the start of this channel. Send a message to get the conversation going!
-          </p>
         </div>
       )}
 

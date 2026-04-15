@@ -255,8 +255,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     for (const event of earlyEventQueue) {
       switch (event.type) {
         case 'message:new': {
-          const p = event.payload as { channelId: string; message: Message }
-          get().addMessage(p.channelId, p.message)
+          const message = event.payload as Message
+          get().addMessage(message.channelId, message)
           break
         }
         case 'presence:changed': {
