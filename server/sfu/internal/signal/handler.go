@@ -130,7 +130,7 @@ func (h *Handler) HandleOffer(w http.ResponseWriter, r *http.Request) {
 				webhookPayload := fmt.Sprintf(`{"userId":"%s", "roomId":"%s"}`, payload.UserID, payload.RoomID)
 				payloadB64 := base64.RawURLEncoding.EncodeToString([]byte(webhookPayload))
 				
-				mac := hmac.New(sha256.New, []byte(cfg.InternalSecret))
+				mac := hmac.New(sha256.New, []byte(h.config.InternalSecret))
 				mac.Write([]byte(payloadB64))
 				sig := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 				
