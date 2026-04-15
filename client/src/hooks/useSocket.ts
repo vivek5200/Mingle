@@ -108,6 +108,15 @@ export function useSocket() {
       socket.emit('ready:ack')
     })
 
+    // ── Auth error handling ──────────────────────────
+    socket.on('connect_error', (err) => {
+      console.error('Socket auth error:', err.message)
+      // Invalid or expired token — force re-login
+      if (err.message.includes('Authentication') || err.message.includes('Invalid') || err.message.includes('expired')) {
+        useAppStore.getState().logout()
+      }
+    })
+
     // ── Event listeners ──────────────────────────────
     socket.on('message:new', (payload) =>
       handleEvent('message:new', payload)

@@ -1,50 +1,46 @@
 /**
- * Safe token storage that works in both browser (localStorage) and
- * Tauri's strict webview context (falls back to in-memory).
+ * Token storage — uses localStorage with silent in-memory fallback.
  *
- * In Tauri, localStorage may be blocked by the strict CSP/security context.
- * We try localStorage first, and if it throws, use a module-scoped Map.
+ * Does a ONE-TIME check on module load to determine if localStorage
+ * is available. Avoids repeated probing that generates console errors.
  */
 
 const TOKEN_KEY = 'mingle-token'
 
-// In-memory fallback (process lifetime only — good enough for Tauri)
+// In-memory fallback
 let _memToken: string | null = null
 
-function safeLocalStorage(): Storage | null {
-  try {
-    // This throws in Tauri's strict webview context
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem('__test__', '1')
-      window.localStorage.removeItem('__test__')
-      return window.localStorage
-    }
-  } catch {
-    // Blocked — fall through to in-memory
+// One-time check: is localStorage usable?
+let _useLocalStorage = false
+try {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem('__ls_test__', '1')
+    window.localStorage.removeItem('__ls_test__')
+    _useLocalStorage = true
   }
-  return null
+} catch {
+  // Silently fall back to in-memory
 }
 
 export function getToken(): string | null {
-  const ls = safeLocalStorage()
-  if (ls) return ls.getItem(TOKEN_KEY)
+  if (_useLocalStorage) {
+    return localStorage.getItem(TOKEN_KEY)
+  }
   return _memToken
 }
 
 export function setToken(token: string): void {
-  const ls = safeLocalStorage()
-  if (ls) {
-    ls.setItem(TOKEN_KEY, token)
-  } else {
-    _memToken = token
+  if (_useLocalStorage) {
+    localStorage.setItem(TOKEN_KEY, token)
   }
+  // Always keep in-memory copy as backup
+  _memToken = token
 }
 
 export function removeToken(): void {
-  const ls = safeLocalStorage()
-  if (ls) {
-    ls.removeItem(TOKEN_KEY)
-  } else {
-    _memToken = null
+  if (_useLocalStorage) {
+    try { localStorage.removeItem(TOKEN_KEY) } catch { /* ignore */ }
   }
+  _memToken = null
 }
+
