@@ -51,6 +51,19 @@ interface AppState {
   addTypingUser: (channelId: string, userId: string) => void
   removeTypingUser: (channelId: string, userId: string) => void
 
+  // Voice / Media (Phase 2.7)
+  activeVoiceChannelId: string | null
+  localStream: MediaStream | null
+  isMicOn: boolean
+  isCameraOn: boolean
+  mediaError: string | null
+  setActiveVoiceChannel: (channelId: string | null) => void
+  setLocalStream: (stream: MediaStream | null) => void
+  setMicOn: (on: boolean) => void
+  setCameraOn: (on: boolean) => void
+  setMediaError: (error: string | null) => void
+  clearLocalStream: () => void
+
   // Hydration Gap Protection (Section 7.1)
   isBuffering: boolean
   earlyEventQueue: QueuedEvent[]
@@ -198,6 +211,32 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       return { typingUsers: newMap }
     }),
+
+  // ── Voice / Media ─────────────────
+  activeVoiceChannelId: null,
+  localStream: null,
+  isMicOn: true,
+  isCameraOn: true,
+  mediaError: null,
+
+  setActiveVoiceChannel: (channelId) => set({ activeVoiceChannelId: channelId }),
+  setLocalStream: (stream) => set({ localStream: stream }),
+  setMicOn: (on) => set({ isMicOn: on }),
+  setCameraOn: (on) => set({ isCameraOn: on }),
+  setMediaError: (error) => set({ mediaError: error }),
+  clearLocalStream: () => {
+    const { localStream } = get()
+    if (localStream) {
+      localStream.getTracks().forEach((t) => t.stop())
+    }
+    set({
+      localStream: null,
+      isMicOn: true,
+      isCameraOn: true,
+      mediaError: null,
+      activeVoiceChannelId: null,
+    })
+  },
 
   // ── Hydration Gap ─────────────────
   isBuffering: false,

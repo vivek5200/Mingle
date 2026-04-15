@@ -1,6 +1,8 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import type { ServerWithChannels } from '@discord/shared'
+import { useAppStore } from '../../store'
 import UserPanel from './UserPanel'
+import VoicePanel from '../voice/VoicePanel'
 
 interface Props {
   server: ServerWithChannels | null
@@ -9,6 +11,8 @@ interface Props {
 export default function ChannelSidebar({ server }: Props) {
   const { channelId } = useParams()
   const navigate = useNavigate()
+  const activeVoiceChannelId = useAppStore((s) => s.activeVoiceChannelId)
+  const setActiveVoiceChannel = useAppStore((s) => s.setActiveVoiceChannel)
 
   if (!server) {
     return (
@@ -28,6 +32,19 @@ export default function ChannelSidebar({ server }: Props) {
 
   const textChannels = server.channels.filter((c) => c.type === 'text')
   const voiceChannels = server.channels.filter((c) => c.type === 'voice')
+
+  // Find the active voice channel name for the VoicePanel
+  const activeVoiceChannel = voiceChannels.find((c) => c.id === activeVoiceChannelId)
+
+  const handleVoiceChannelClick = (voiceChannelId: string) => {
+    if (activeVoiceChannelId === voiceChannelId) {
+      // Clicking the same channel again — disconnect
+      setActiveVoiceChannel(null)
+    } else {
+      // Join this voice channel
+      setActiveVoiceChannel(voiceChannelId)
+    }
+  }
 
   return (
     <aside className="flex flex-col w-[240px] bg-bg-secondary shrink-0">
@@ -81,24 +98,37 @@ export default function ChannelSidebar({ server }: Props) {
               </svg>
               Voice Channels
             </h3>
-            {voiceChannels.map((channel) => (
-              <button
-                key={channel.id}
-                id={`voice-channel-${channel.id}`}
-                className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-sm text-sm cursor-pointer
-                           text-text-muted hover:bg-bg-modifier-hover hover:text-text-secondary
-                           transition-colors"
-              >
-                <span className="text-lg leading-none">🔊</span>
-                <span className="truncate">{channel.name}</span>
-              </button>
-            ))}
+            {voiceChannels.map((channel) => {
+              const isActive = channel.id === activeVoiceChannelId
+              return (
+                <button
+                  key={channel.id}
+                  id={`voice-channel-${channel.id}`}
+                  onClick={() => handleVoiceChannelClick(channel.id)}
+                  className={`w-full flex items-center gap-1.5 px-2 py-1.5 rounded-sm text-sm cursor-pointer
+                             transition-colors
+                             ${isActive
+                               ? 'bg-bg-modifier-active text-text-primary'
+                               : 'text-text-muted hover:bg-bg-modifier-hover hover:text-text-secondary'
+                             }`}
+                >
+                  <span className="text-lg leading-none">🔊</span>
+                  <span className="truncate">{channel.name}</span>
+                </button>
+              )
+            })}
           </div>
         )}
       </div>
+
+      {/* Voice panel — shown when connected to a voice channel */}
+      {activeVoiceChannel && (
+        <VoicePanel channelName={activeVoiceChannel.name} />
+      )}
 
       {/* User panel at bottom */}
       <UserPanel />
     </aside>
   )
 }
+
